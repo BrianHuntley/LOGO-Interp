@@ -1,105 +1,88 @@
 from ply import yacc
-from stackmachine_lex import tokens, lexer
-from stackmachine_interp_state import state
+from logo_lex import tokens, lexer
+from logo_state import state
 
-def p_prog(_):
+def p_program(p):
     '''
-    prog : instr_list
+    program : stmt_list
     '''
-    pass
+    state.AST = p[1]
 
-def p_instr_list(_):
+def p_stmt_list(p):
     '''
-    instr_list : labeled_instr instr_list
+    stmt_list : stmt stmt_list
               | empty
     '''
-    pass
+    if (len(p) == 3):
+        p[0] = ('seq', p[1], p[2])
+    elif (len(p) == 2):
+        p[0] = p[1]
 
-def p_labeled_instr(p):
+def p_stmt(p):
     '''
-    labeled_instr : label_def instr
+    stmt : FD exp
+         | BK exp
+         | RT exp
+         | LT exp
+         | REPEAT exp '[' stmt_list ']'
+         | ID '=' exp
+         | PRINT exp
+         | CS
     '''
-    # if label exists record it in the label table
-    if p[1]:
-        state.label_table[p[1]] = state.instr_ix
-    # append instr to program
-    state.program.append(p[2])
-    state.instr_ix += 1
-
-def p_label_def(p):
-    '''
-    label_def : NAME ':' 
-              | empty
-    '''
-    p[0] = p[1]
-
-def p_instr(p):
-    '''
-    instr : PUSH exp ';'
-          | POP ';'
-          | PRINT msg ';'
-          | STORE NAME ';'
-          | ASK msg ';'
-          | DUP ';'
-          | ADD ';'
-          | SUB ';'
-          | MUL ';'
-          | DIV ';'
-          | EQU ';'
-          | LEQ ';'
-          | JUMPT label ';'
-          | JUMPF label ';'
-          | JUMP label ';'
-          | STOP msg ';'
-          | NOOP ';'
-    '''
-    # for each instr assemble the appropriate tuple
-    if p[1] in ['push', 'print', 'store', 'ask', 'jumpT', 'jumpF', 'jump', 'stop']:
-        p[0] = (p[1], p[2])
-    elif p[1] in ['pop', 'dup', 'add', 'sub', 'mul', 'div', 'equ', 'leq', 'noop']:
-        p[0] = (p[1],)
+    if p[1] == 'cs':
+        p[0] = ('cs',)
+    elif p[1] == 'fd':
+        p[0] = ('fd', p[2])
+    elif p[1] == 'bk':
+        p[0] = ('bk', p[2])
+    elif p[1] == 'rt':
+        p[0] = ('rt', p[2])
+    elif p[1] == 'lt':
+        p[0] = ('lt', p[2])
+    elif p[1] == 'repeat':
+        p[0] = ('repeat', p[2], p[4])
+    elif p[2] == '=':
+        p[0] = ('assign', p[1], p[3])
+    elif p[1] == 'print':
+        p[0] = ('print', p[2])
     else:
         raise ValueError("Unexpected instr value: %s" % p[1])
 
-def p_label(p):
+def p_exp(p):
     '''
-        label : NAME
-        '''
-    p[0] = p[1]
-
-def p_uminus_exp(p):
+    exp : exp PLUS exp
+        | exp MINUS exp
+        | exp TIMES exp
+        | exp DIVIDE exp
     '''
-    exp : '-' exp
-    '''
-    p[0] = ('UMINUS', p[2])
+    p[0] = (p[2], p[1], p[3])
     
-def p_var_exp(p):
+def p_integer_exp(p):
     '''
-    exp : NAME
+    exp : INTEGER
     '''
-    p[0] = ('NAME', p[1])
+    p[0] = ('integer', int(p[1]))
+     
+def p_id_exp(p):
+    '''
+    exp : ID
+    '''
+    p[0] = ('id', p[1])
 
-def p_number_exp(p):
+def p_paren_exp(p):
     '''
-    exp : NUMBER
+    exp : '(' exp ')'
     '''
-    p[0] = ('NUMBER', int(p[1]))
-    
-def p_msg(p):
-    '''
-        msg : MSG
-            | empty
-        '''
-    p[0] = p[1]
+    p[0] = ('paren', p[2])
     
 def p_empty(p):
     '''
     empty : 
     '''
-    p[0] = ''
+    p[0] = ('nil',)
 
 def p_error(t):
     print("Syntax error at '%s'" % t.value)
 
-parser = yacc.yacc(debug=False, tabmodule='stackmachineparsetab')
+parser = yacc.yacc(debug=False, tabmodule='logoparsetab')
 
