@@ -7,6 +7,58 @@ import turtle
 s = turtle.getscreen()
 t = turtle.Turtle()
 
+
+
+#########################################################################
+def len_seq(seq_list):
+
+    if seq_list[0] == 'nil':
+        return 0
+
+    elif seq_list[0] == 'seq':
+        # unpack the seq node
+        (SEQ, p1, p2) = seq_list
+
+        return 1 + len_seq(p2)
+
+    else:
+            raise ValueError("unknown node type: {}".format(seq_list[0]))
+
+#########################################################################
+def eval_actual_args(args):
+
+    if args[0] == 'nil':
+        return ('nil',)
+
+    elif args[0] == 'seq':
+        # unpack the seq node
+        (SEQ, p1, p2) = args
+
+        val = walk(p1)
+
+        return ('seq', val, eval_actual_args(p2))
+
+    else:
+        raise ValueError("unknown node type: {}".format(args[0]))
+    
+#########################################################################
+def declare_formal_args(formal_args, actual_val_args):
+
+    if len_seq(actual_val_args) != len_seq(formal_args):
+        raise ValueError("actual and formal argument lists do not match")
+
+    if formal_args[0] == 'nil':
+        return
+
+    # unpack the args
+    (SEQ, (ID, sym), p1) = formal_args
+    (SEQ, val, p2) = actual_val_args
+
+    # declare the variable
+    state.symbol_table.declare_scalar(sym, val)
+
+    declare_formal_args(p1, p2)        
+        
 #########################################################################
 # node functions
 #########################################################################
@@ -80,8 +132,7 @@ def assign_stmt(node):
     assert_match(ASSIGN, 'assign')
     
     value = walk(exp)
-    state.symbol_table[name] = value
-    
+    state.symbol_table.declare_scalar(name, value)
 #########################################################################
 def print_stmt(node):
     
@@ -99,6 +150,70 @@ def cs_stmt(node):
     
     turtle.clearscreen()
 
+#########################################################################
+def declfunc_stmt(node):
+    try: # try the declfunc pattern without arglist
+        (DECLFUNC, name, (NIL,), body) = node
+        assert_match(DECLFUNC, 'declfunc')
+        assert_match(NIL, 'nil')
+
+    except ValueError: # try declfunc with arglist
+        (DECLFUNC, name, arglist, body) = node
+        assert_match(DECLFUNC, 'declfunc')
+
+        context = state.symbol_table.get_config()
+        funval = ('funval', arglist, body, context)
+        state.symbol_table.declare_fun(name, funval)
+
+    else: # declfunc pattern matched
+        # no arglist is present
+        context = state.symbol_table.get_config()
+        funval = ('funval', ('nil',), body, context)
+        state.symbol_table.declare_fun(name, funval)
+
+    
+#########################################################################
+def callfunc_stmt(node):
+    
+    (CALLFUNC, name, actual_args) = node
+    assert_match(CALLFUNC, 'callfunc')
+    
+    (form, val) = state.symbol_table.lookup_sym(name)
+
+    if form != 'function':
+        raise ValueError("{} is not a function".format(name))
+
+    # unpack the funval tuple
+    (FUNVAL, formal_arglist, body, context) = val
+
+    if len_seq(formal_arglist) != len_seq(actual_args):
+        raise ValueError("function {} expects {} arguments".format(sym, len_seq(formal_arglist)))
+
+    # set up the environment for static scoping and then execute the function
+    actual_val_args = eval_actual_args(actual_args)   # evaluate actuals in current symtab
+    save_symtab = state.symbol_table.get_config()        # save current symtab
+    state.symbol_table.set_config(context)               # make function context current symtab
+    state.symbol_table.push_scope()                      # push new function scope
+    declare_formal_args(formal_arglist, actual_val_args) # declare formals in function scope
+
+    return_value = None
+    try:
+        walk(body)                                       # execute the function
+    except ReturnValue as val:
+        return_value = val.value
+
+    # NOTE: popping the function scope is not necessary because we
+    # are restoring the original symtab configuration
+    state.symbol_table.set_config(save_symtab)           # restore original symtab config
+
+    return return_value
+    
+#########################################################################
+def end_stmt(node):
+    
+    (END, ) = node
+    assert_match(END, 'end')
+    
 #########################################################################
 def plus_exp(node):
     
@@ -144,28 +259,6 @@ def divide_exp(node):
     return v1 // v2
 
 #########################################################################
-def eq_exp(node):
-    
-    (EQ,c1,c2) = node
-    assert_match(EQ, '==')
-    
-    v1 = walk(c1)
-    v2 = walk(c2)
-    
-    return 1 if v1 == v2 else 0
-
-#########################################################################
-def le_exp(node):
-    
-    (LE,c1,c2) = node
-    assert_match(LE, '<=')
-    
-    v1 = walk(c1)
-    v2 = walk(c2)
-    
-    return 1 if v1 <= v2 else 0
-
-#########################################################################
 def integer_exp(node):
 
     (INTEGER, value) = node
@@ -179,7 +272,9 @@ def id_exp(node):
     (ID, name) = node
     assert_match(ID, 'id')
     
-    return state.symbol_table.get(name, 0)
+    (kind, val) = state.symbol_table.lookup_sym(name)
+    
+    return val
 
 #########################################################################
 def uminus_exp(node):
@@ -227,11 +322,14 @@ dispatch_dict = {
     'fd'      : fd_stmt,
     'bk'      : bk_stmt,
     'rt'      : rt_stmt,
-    'lt'      : rt_stmt,
+    'lt'      : lt_stmt,
     'repeat'  : repeat_stmt,
     'assign'  : assign_stmt,
     'print'   : print_stmt,
     'cs'      : cs_stmt,
+    'declfunc': declfunc_stmt,
+    'callfunc': callfunc_stmt,
+    'end'     : end_stmt,
     '+'       : plus_exp,
     '-'       : minus_exp,
     '*'       : times_exp,

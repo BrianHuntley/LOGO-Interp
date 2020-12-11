@@ -28,6 +28,8 @@ def p_stmt(p):
          | ID '=' exp
          | PRINT exp
          | CS
+         | TO ID opt_formal_args stmt_list END
+         | ID ':' opt_actual_args
     '''
     if p[1] == 'cs':
         p[0] = ('cs',)
@@ -45,6 +47,10 @@ def p_stmt(p):
         p[0] = ('assign', p[1], p[3])
     elif p[1] == 'print':
         p[0] = ('print', p[2])
+    elif p[1] == 'to':
+        p[0] = ('declfunc', p[2], p[3], p[4])
+    elif p[2] == ':':
+        p[0] = ('callfunc', p[1], p[3]) 
     else:
         raise ValueError("Unexpected instr value: %s" % p[1])
 
@@ -74,6 +80,40 @@ def p_paren_exp(p):
     exp : '(' exp ')'
     '''
     p[0] = ('paren', p[2])
+    
+def p_opt_formal_args(p):
+    '''
+    opt_formal_args : formal_args
+                    | empty
+    '''
+    p[0] = p[1]
+    
+def p_formal_args(p):
+    '''
+    formal_args : ID ',' formal_args
+                | ID
+    '''
+    if (len(p) == 4):
+        p[0] = ('seq', ('id', p[1]), p[3])
+    elif (len(p) == 2):
+        p[0] = ('seq', ('id', p[1]), ('nil',))
+
+def p_opt_actual_args(p):
+    '''
+    opt_actual_args : actual_args
+                    | empty
+    '''
+    p[0] = p[1]        
+
+def p_actual_args(p):
+    '''
+    actual_args : exp ',' actual_args
+                | exp
+    '''
+    if (len(p) == 4):
+        p[0] = ('seq', p[1], p[3])
+    elif (len(p) == 2):
+        p[0] = ('seq', p[1], ('nil',))   
     
 def p_empty(p):
     '''
