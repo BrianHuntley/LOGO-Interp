@@ -7,8 +7,10 @@ from logo_lex import tokens, lexer
 # NOTE: all arithmetic operator need to have tokens
 #       so that we can put them into the precedence table
 precedence = (
+              ('left', 'EQ', 'LEQ', 'GEQ'),
               ('left', 'PLUS', 'MINUS'),
               ('left', 'TIMES', 'DIVIDE'),
+              ('right', 'UMINUS')
              )
 
 def p_grammar(_):
