@@ -6,7 +6,7 @@ import turtle
 
 s = turtle.getscreen()
 t = turtle.Turtle()
-
+turtle.mode('logo')
 
 
 #########################################################################
@@ -114,6 +114,59 @@ def lt_stmt(node):
     
     val = walk(exp)
     turtle.left(val)
+    
+#########################################################################
+def circle_stmt(node):
+    
+    (CIRCLE, exp) = node
+    assert_match(CIRCLE, 'circle')
+    
+    val = walk(exp)
+    turtle.circle(val)
+    
+#########################################################################
+def setx_stmt(node):
+    
+    (SETX, exp) = node
+    assert_match(SETX, 'setx')
+    
+    val = walk(exp)
+    turtle.setx(val)
+
+#########################################################################
+def sety_stmt(node):
+    
+    (SETY, exp) = node
+    assert_match(SETY, 'sety')
+    
+    val = walk(exp)
+    turtle.sety(val)
+    
+#########################################################################
+def setangle_stmt(node):
+    
+    (SETANGLE, exp) = node
+    assert_match(SETANGLE, 'setangle')
+    
+    val = walk(exp)
+    
+    turtle.setheading(val)
+    
+#########################################################################
+def pd_stmt(node):
+    
+    (PD,) = node
+    assert_match(PD, 'pd')
+    
+    turtle.down()
+    
+#########################################################################
+def pu_stmt(node):
+    
+    (PU,) = node
+    assert_match(PU, 'pu')
+    
+    turtle.up()
 
 #########################################################################
 def repeat_stmt(node):
@@ -132,7 +185,11 @@ def assign_stmt(node):
     assert_match(ASSIGN, 'assign')
     
     value = walk(exp)
-    state.symbol_table.declare_scalar(name, value)
+    try:
+        state.symbol_table.declare_scalar(name, value)
+    except ValueError:
+        state.symbol_table.update_sym(name, ('scalar', value))
+        
 #########################################################################
 def print_stmt(node):
     
@@ -215,6 +272,16 @@ def end_stmt(node):
     assert_match(END, 'end')
     
 #########################################################################
+def if_stmt(node):
+    
+    (IF, cond, stmt) = node
+    assert_match(IF, 'if')
+    
+    value = walk(cond)
+    if value != 0:
+        walk(stmt)
+    
+#########################################################################
 def plus_exp(node):
     
     (PLUS,c1,c2) = node
@@ -259,6 +326,39 @@ def divide_exp(node):
     return v1 // v2
 
 #########################################################################
+def leq_exp(node):
+    
+    (LEQ, c1, c2) = node
+    assert_match(LEQ, '<=')
+    
+    val1 = walk(c1)
+    val2 = walk(c2)
+    
+    return 1 if val1 <= val2 else 0
+
+#########################################################################
+def eq_exp(node):
+    
+    (EQ, c1, c2) = node
+    assert_match(EQ, '==')
+    
+    val1 = walk(c1)
+    val2 = walk(c2)
+    
+    return 1 if val1 == val2 else 0
+
+#########################################################################
+def geq_exp(node):
+    
+    (GEQ, c1, c2) = node
+    assert_match(GEQ, '>=')
+    
+    val1 = walk(c1)
+    val2 = walk(c2)
+    
+    return 1 if val1 >= val2 else 0
+
+#########################################################################
 def integer_exp(node):
 
     (INTEGER, value) = node
@@ -277,24 +377,6 @@ def id_exp(node):
     return val
 
 #########################################################################
-def uminus_exp(node):
-    
-    (UMINUS, exp) = node
-    assert_match(UMINUS, 'uminus')
-    
-    val = walk(exp)
-    return - val
-
-#########################################################################
-def not_exp(node):
-    
-    (NOT, exp) = node
-    assert_match(NOT, 'not')
-    
-    val = walk(exp)
-    return 0 if val != 0 else 1
-
-#########################################################################
 def paren_exp(node):
     
     (PAREN, exp) = node
@@ -302,6 +384,16 @@ def paren_exp(node):
     
     # return the value of the parenthesized expression
     return walk(exp)
+
+#########################################################################
+def uminus_exp(node):
+    
+    (UMINUS, exp) = node
+    assert_match(UMINUS, 'uminus')
+    
+    val = walk(exp)
+    
+    return -val
 
 #########################################################################
 # walk
@@ -323,6 +415,12 @@ dispatch_dict = {
     'bk'      : bk_stmt,
     'rt'      : rt_stmt,
     'lt'      : lt_stmt,
+    'circle'  : circle_stmt,
+    'setx'    : setx_stmt,
+    'sety'    : sety_stmt,
+    'setangle': setangle_stmt,
+    'pd'      : pd_stmt,
+    'pu'      : pu_stmt,
     'repeat'  : repeat_stmt,
     'assign'  : assign_stmt,
     'print'   : print_stmt,
@@ -330,13 +428,18 @@ dispatch_dict = {
     'declfunc': declfunc_stmt,
     'callfunc': callfunc_stmt,
     'end'     : end_stmt,
+    'if'      : if_stmt,
     '+'       : plus_exp,
     '-'       : minus_exp,
     '*'       : times_exp,
     '/'       : divide_exp,
+    '<='      : leq_exp,
+    '=='      : eq_exp,
+    '>='      : geq_exp,
     'integer' : integer_exp,
     'id'      : id_exp,
-    'paren'   : paren_exp
+    'paren'   : paren_exp,
+    'uminus'  : uminus_exp
 }
 
 

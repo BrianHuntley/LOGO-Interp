@@ -6,18 +6,30 @@ reserved = {
     'bk' : 'BK',
     'rt' : 'RT',
     'lt' : 'LT',
+    'circle' : 'CIRCLE',
+    'setx' : 'SETX',
+    'sety' : 'SETY',
+    'setangle' : 'SETANGLE',
+    'pd' : 'PD',
+    'pu' : 'PU',
     'repeat' : 'REPEAT',
     'print' : 'PRINT',
-    'cs' : 'CS'
+    'cs' : 'CS',
+    'to' : 'TO',
+    'end' : 'END',
+    'if' : 'IF'
 }
 
-literals = ['[',']','=', '(', ')']
-tokens = ['PLUS','MINUS','TIMES', 'DIVIDE', 'INTEGER', 'ID'] + list(reserved.values())
+literals = ['[',']','=', '(', ')', ':']
+tokens = ['PLUS','MINUS','TIMES', 'DIVIDE', 'GEQ', 'LEQ', 'EQ', 'INTEGER', 'ID'] + list(reserved.values())
 
 t_PLUS    = r'\+'
 t_MINUS   = r'-'
 t_TIMES   = r'\*'
 t_DIVIDE  = r'/'
+t_GEQ = r'>='
+t_LEQ = r'<='
+t_EQ = r'=='
 
 t_ignore = ' \t'
 
