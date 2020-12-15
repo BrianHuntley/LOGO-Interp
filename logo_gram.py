@@ -30,6 +30,7 @@ def p_grammar(_):
          | SETANGLE exp
          | PD
          | PU
+         | STOP
          | REPEAT exp '[' stmt_list ']'
          | ID '=' exp
          | PRINT exp

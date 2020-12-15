@@ -17,10 +17,11 @@ reserved = {
     'cs' : 'CS',
     'to' : 'TO',
     'end' : 'END',
-    'if' : 'IF'
+    'if' : 'IF',
+    'stop' : 'STOP'
 }
 
-literals = ['[',']','=', '(', ')', ':']
+literals = ['[',']','=', '(', ')', ':', ',']
 tokens = ['PLUS','MINUS','TIMES', 'DIVIDE', 'GEQ', 'LEQ', 'EQ', 'INTEGER', 'ID'] + list(reserved.values())
 
 t_PLUS    = r'\+'

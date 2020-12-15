@@ -37,6 +37,7 @@ def p_stmt(p):
          | SETANGLE exp
          | PD
          | PU
+         | STOP
          | REPEAT exp '[' stmt_list ']'
          | ID '=' exp
          | PRINT exp
@@ -67,6 +68,8 @@ def p_stmt(p):
         p[0] = ('sety', p[2])
     elif p[1] == 'setangle':
         p[0] = ('setangle', p[2])
+    elif p[1] == 'stop':
+        p[0] = ('stop',)
     elif p[1] == 'repeat':
         p[0] = ('repeat', p[2], p[4])
     elif p[2] == '=':

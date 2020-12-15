@@ -7,7 +7,18 @@ import turtle
 s = turtle.getscreen()
 t = turtle.Turtle()
 turtle.mode('logo')
+turtle.speed('fastest')
 
+#########################################################################
+# Use the exception mechanism to return values from function calls
+
+class ReturnValue(Exception):
+
+    def __init__(self, value):
+        self.value = value
+
+    def __str__(self):
+        return(repr(self.value))
 
 #########################################################################
 def len_seq(seq_list):
@@ -167,6 +178,14 @@ def pu_stmt(node):
     assert_match(PU, 'pu')
     
     turtle.up()
+    
+#########################################################################
+def stop_stmt(node):
+    
+    (STOP,) = node
+    assert_match(STOP, 'stop')
+    
+    raise ReturnValue(None)
 
 #########################################################################
 def repeat_stmt(node):
@@ -421,6 +440,7 @@ dispatch_dict = {
     'setangle': setangle_stmt,
     'pd'      : pd_stmt,
     'pu'      : pu_stmt,
+    'stop'    : stop_stmt,
     'repeat'  : repeat_stmt,
     'assign'  : assign_stmt,
     'print'   : print_stmt,
