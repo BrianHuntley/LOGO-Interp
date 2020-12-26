@@ -180,6 +180,18 @@ def pu_stmt(node):
     turtle.up()
     
 #########################################################################
+def setcolor_stmt(node):
+    
+    (SETCOLOR, exp1, exp2, exp3) = node
+    assert_match(SETCOLOR, 'setcolor')
+    
+    r = int(walk(exp1))/255
+    g = int(walk(exp2))/255
+    b = int(walk(exp3))/255
+    
+    turtle.pencolor(r, g, b)
+    
+#########################################################################
 def stop_stmt(node):
     
     (STOP,) = node
@@ -441,6 +453,7 @@ dispatch_dict = {
     'pd'      : pd_stmt,
     'pu'      : pu_stmt,
     'stop'    : stop_stmt,
+    'setcolor': setcolor_stmt,
     'repeat'  : repeat_stmt,
     'assign'  : assign_stmt,
     'print'   : print_stmt,

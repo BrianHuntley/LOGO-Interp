@@ -18,7 +18,8 @@ reserved = {
     'to' : 'TO',
     'end' : 'END',
     'if' : 'IF',
-    'stop' : 'STOP'
+    'stop' : 'STOP',
+    'setcolor' : 'SETCOLOR'
 }
 
 literals = ['[',']','=', '(', ')', ':', ',']

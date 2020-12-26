@@ -31,6 +31,7 @@ def p_grammar(_):
          | PD
          | PU
          | STOP
+         | SETCOLOR exp exp exp
          | REPEAT exp '[' stmt_list ']'
          | ID '=' exp
          | PRINT exp
